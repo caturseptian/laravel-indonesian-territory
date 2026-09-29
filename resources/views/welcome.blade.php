@@ -24,7 +24,7 @@
     <body>
         <main>
             <h1>Data Wilayah Indonesia</h1>
-            <p>Kepmendagri {{ $metadata['base_document'] }}, berlaku {{ $metadata['effective_date'] }}.</p>
+            <p>{{ $metadata['document_title'] }}, berlaku {{ \Illuminate\Support\Carbon::parse($metadata['effective_date'])->locale('id')->translatedFormat('j F Y') }}.</p>
 
             <table>
                 <tr><th>Provinsi</th><td class="number">{{ number_format($metadata['counts']['provinces'], 0, ',', '.') }}</td></tr>

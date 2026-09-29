@@ -82,6 +82,7 @@ class TerritoryApiTest extends TestCase
             ->assertJsonPath('data.0.code', '31.71.01.1001');
 
         $this->getJson('/api/villages')->assertUnprocessable();
+        $this->getJson('/api/villages?q='.urlencode('%%%'))->assertUnprocessable();
     }
 
     public function test_unknown_code_returns_not_found(): void
@@ -92,6 +93,6 @@ class TerritoryApiTest extends TestCase
 
     public function test_home_page_shows_counts(): void
     {
-        $this->get('/')->assertOk()->assertSee('83.762');
+        $this->get('/')->assertOk()->assertSee('83.762')->assertSee('Kepmendagri 300.2.2-2138 Tahun 2025');
     }
 }
