@@ -22,6 +22,26 @@ Kode pos tersedia untuk 72.329 kelurahan/desa. Sisanya `null` karena tidak ada k
 > Proyek ini independen dan tidak berafiliasi dengan Kementerian Dalam Negeri. Data diolah dari dokumen
 > regulasi yang terbit untuk publik. Untuk keperluan resmi, rujuk dokumen aslinya.
 
+## Tanpa instalasi: Indonesia Region API
+
+Data yang sama tersedia online di **[indonesia-region.caturseptian.site](https://indonesia-region.caturseptian.site)**:
+gratis, tanpa API key dan tanpa server sendiri. Cocok kalau Anda hanya butuh datanya, atau memakai bahasa selain PHP.
+
+| Halaman | Isi |
+|---|---|
+| [Dokumentasi API](https://indonesia-region.caturseptian.site/id/docs) | daftar endpoint, format kode, contoh klien Go, PHP, Java, TypeScript |
+| [API Explorer](https://indonesia-region.caturseptian.site/id/explorer) | telusuri provinsi sampai kelurahan/desa langsung di browser |
+| [Peta](https://indonesia-region.caturseptian.site/id/map) | batas wilayah BIG sampai tingkat desa dan 17.374 pulau bernama |
+| [Unduhan](https://indonesia-region.caturseptian.site/api/v1/export/indonesia-regions.csv) | seluruh data dalam [CSV](https://indonesia-region.caturseptian.site/api/v1/export/indonesia-regions.csv), [JSON](https://indonesia-region.caturseptian.site/api/v1/export/indonesia-regions.json), [SQL](https://indonesia-region.caturseptian.site/api/v1/export/indonesia-regions.sql), [XLSX](https://indonesia-region.caturseptian.site/api/v1/export/indonesia-regions.xlsx), [XML](https://indonesia-region.caturseptian.site/api/v1/export/indonesia-regions.xml), [PDF](https://indonesia-region.caturseptian.site/api/v1/export/indonesia-regions.pdf) |
+
+```bash
+curl https://indonesia-region.caturseptian.site/api/v1/provinces.json
+curl https://indonesia-region.caturseptian.site/api/v1/districts/31.71.01/villages.json
+```
+
+Selain data di repositori ini, situs tersebut juga menyediakan koordinat, poligon batas wilayah, data pulau
+dan riwayat perubahan kode sejak 2017.
+
 ## Isi repositori
 
 - `database/data/*.csv`: data wilayah dalam CSV biasa. Bisa dipakai tanpa Laravel, misalnya untuk impor ke Excel, Python atau database lain.
@@ -29,7 +49,7 @@ Kode pos tersedia untuk 72.329 kelurahan/desa. Sisanya `null` karena tidak ada k
 - `database/seeders/TerritorySeeder.php`: mengisi seluruh 91.599 baris dalam waktu kurang dari satu detik di SQLite.
 - `app/Models`: `Province`, `Regency`, `District`, `Village` beserta relasinya, plus enum `RegencyType` dan `VillageType`.
 - `routes/api.php`: REST API hanya-baca.
-- `php artisan territory:sync`: memperbarui data dari sumber kanonik.
+- `php artisan territory:sync`: mengunduh data terbaru dari Indonesia Region API.
 
 ## Kebutuhan
 
@@ -139,10 +159,10 @@ yang tercetak di setiap baris kabupaten/kota juga sama dengan jumlah baris di ba
 ditulis persis seperti di dokumen. Pengujian di `tests/Unit/TerritoryDataTest.php` memeriksa format kode,
 keunikan kode, induk setiap wilayah dan kesesuaian jenis wilayah dengan kodenya.
 
-Untuk memperbarui data dari salinan lokal repositori sumber:
+Untuk memperbarui data ke versi terbaru dari [Indonesia Region API](https://indonesia-region.caturseptian.site):
 
 ```bash
-php artisan territory:sync /path/ke/indonesia-region-api
+php artisan territory:sync
 php artisan migrate:fresh --seed
 ```
 
@@ -160,6 +180,8 @@ composer test
 Kepmendagri 300.2.2-2138/2025. The repository ships plain CSV files, a migration, a fast seeder,
 Eloquent models and a read-only JSON REST API. Codes are strings in the official dotted format, for example
 `31.71.01.1001`. Install with `composer setup`, then call `GET /api/provinces`.
+The same data, plus coordinates, boundaries, islands and downloads, is available without installation
+at [indonesia-region.caturseptian.site](https://indonesia-region.caturseptian.site) (English docs at `/docs`).
 
 ## Lisensi
 
