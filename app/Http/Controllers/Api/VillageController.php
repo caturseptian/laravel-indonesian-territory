@@ -16,7 +16,7 @@ class VillageController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $validated = $request->validate([
-            'q' => ['required_without:postal_code', 'string', 'min:3', 'max:100'],
+            'q' => ['required_without:postal_code', 'string', 'min:3', 'max:100', 'not_regex:/[%_\\\\]/'],
             'postal_code' => ['required_without:q', 'digits:5'],
         ]);
 
