@@ -1,10 +1,7 @@
 {
     "dataset_version": "kepmendagri-300.2.2-2138-2025+2430-2025",
+    "document_title": "Kepmendagri 300.2.2-2138 Tahun 2025",
     "effective_date": "2025-06-23",
-    "base_document": "KEPMENDAGRI-300-2-2-2138-2025",
-    "amendments": [
-        "KEPMENDAGRI-300-2-2-2430-2025"
-    ],
     "counts": {
         "provinces": 38,
         "regencies": 514,

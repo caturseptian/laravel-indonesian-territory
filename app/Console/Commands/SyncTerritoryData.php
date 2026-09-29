@@ -5,13 +5,14 @@ namespace App\Console\Commands;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
 /**
- * Menyalin data kanonik indonesia-region-api (https://indonesia-region.caturseptian.site) ke database/data.
+ * Mengunduh data wilayah terbaru dari Indonesia Region API ke database/data.
  */
-#[Signature('territory:sync {source : Path ke repositori indonesia-region-api}')]
-#[Description('Perbarui database/data/*.csv dari data kanonik indonesia-region-api')]
+#[Signature('territory:sync {--url=https://indonesia-region.caturseptian.site : Alamat Indonesia Region API}')]
+#[Description('Perbarui database/data/*.csv dari Indonesia Region API')]
 class SyncTerritoryData extends Command
 {
     /**
@@ -26,59 +27,76 @@ class SyncTerritoryData extends Command
         'villages' => ['code', 'district_code', 'type', 'name', 'postal_code'],
     ];
 
+    /**
+     * Nilai kolom "level" di berkas ekspor, per tingkat wilayah.
+     */
+    private const LEVELS = [
+        'province' => 'provinces',
+        'regency' => 'regencies',
+        'district' => 'districts',
+        'village' => 'villages',
+    ];
+
     public function handle(): int
     {
-        $source = rtrim($this->argument('source'), '/');
-        $canonical = "{$source}/data/canonical";
+        $api = rtrim($this->option('url'), '/').'/api/v1';
 
-        if (! is_file("{$canonical}/metadata.json")) {
-            $this->error("Data kanonik tidak ditemukan di {$canonical}.");
+        $metadata = Http::timeout(60)->get("{$api}/meta.json")->throw()->json();
+        $export = tempnam(sys_get_temp_dir(), 'territory');
+        Http::timeout(300)->sink($export)->get("{$api}/export/indonesia-regions.csv")->throw();
 
-            return self::FAILURE;
-        }
-
-        $postalCodes = [];
-        foreach ($this->read("{$source}/data/postal/villages.csv") as $row) {
-            $postalCodes[$row['code']] = $row['postal_code'];
-        }
-
-        $counts = [];
+        $targets = [];
         foreach (self::COLUMNS as $level => $columns) {
-            $target = fopen(database_path("data/{$level}.csv"), 'w');
-            fputcsv($target, $columns, escape: '');
-
-            $counts[$level] = 0;
-            foreach ($this->read("{$canonical}/{$level}.csv") as $row) {
-                $row['postal_code'] = $postalCodes[$row['code']] ?? '';
-                fputcsv($target, array_map(fn (string $column) => $row[$column], $columns), escape: '');
-                $counts[$level]++;
-            }
-
-            fclose($target);
-            $this->components->twoColumnDetail($level, number_format($counts[$level]));
+            $targets[$level] = fopen(database_path("data/{$level}.csv"), 'w');
+            fputcsv($targets[$level], $columns, escape: '');
         }
 
-        $metadata = json_decode(file_get_contents("{$canonical}/metadata.json"), true);
+        $counts = array_fill_keys(array_keys(self::COLUMNS), 0);
+        $postalCodes = 0;
+        foreach ($this->read($export) as $row) {
+            $level = self::LEVELS[$row['level']] ?? throw new RuntimeException("Tingkat tidak dikenal: {$row['level']}.");
+
+            fputcsv($targets[$level], array_map(fn (string $column) => $row[$column], self::COLUMNS[$level]), escape: '');
+            $counts[$level]++;
+            $postalCodes += $level === 'villages' && $row['postal_code'] !== '' ? 1 : 0;
+        }
+
+        array_map(fclose(...), $targets);
+        unlink($export);
+
+        foreach ($counts as $level => $count) {
+            $this->components->twoColumnDetail($level, number_format($count));
+
+            if ($count !== $metadata['counts'][$level]) {
+                throw new RuntimeException("Jumlah {$level} ({$count}) tidak sama dengan meta.json ({$metadata['counts'][$level]}).");
+            }
+        }
 
         file_put_contents(database_path('data/metadata.json'), json_encode([
             'dataset_version' => $metadata['dataset_version'],
+            'document_title' => $this->title($metadata['dataset_version']),
             'effective_date' => $metadata['effective_date'],
-            'base_document' => $metadata['base_document'],
-            'amendments' => $metadata['amendments'],
-            'counts' => $metadata['counts'],
-            'postal_codes' => count(array_filter($postalCodes)),
-            'source' => 'https://indonesia-region.caturseptian.site',
+            'counts' => array_intersect_key($metadata['counts'], array_flip([
+                'provinces', 'regencies', 'regencies_by_type', 'districts', 'villages', 'villages_by_type',
+            ])),
+            'postal_codes' => $postalCodes,
+            'source' => rtrim($this->option('url'), '/'),
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL);
-
-        foreach ($counts as $level => $count) {
-            if ($count !== $metadata['counts'][$level]) {
-                throw new RuntimeException("Jumlah {$level} ({$count}) tidak sama dengan metadata ({$metadata['counts'][$level]}).");
-            }
-        }
 
         $this->components->info("Data {$metadata['dataset_version']} tersalin ke database/data.");
 
         return self::SUCCESS;
+    }
+
+    /**
+     * "kepmendagri-300.2.2-2138-2025+2430-2025" menjadi "Kepmendagri 300.2.2-2138 Tahun 2025".
+     */
+    private function title(string $datasetVersion): string
+    {
+        preg_match('/^kepmendagri-(.+)-(\d{4})$/', explode('+', $datasetVersion)[0], $matches)
+            ?: throw new RuntimeException("Versi dataset tidak dikenal: {$datasetVersion}.");
+
+        return "Kepmendagri {$matches[1]} Tahun {$matches[2]}";
     }
 
     /**
