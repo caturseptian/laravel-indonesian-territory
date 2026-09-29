@@ -1,7 +1,7 @@
 # Laravel Indonesian Territory: Kode dan Data Wilayah Indonesia
 
 [![tests](https://github.com/caturseptian/laravel-indonesian-territory/actions/workflows/tests.yml/badge.svg)](https://github.com/caturseptian/laravel-indonesian-territory/actions/workflows/tests.yml)
-![PHP](https://img.shields.io/badge/PHP-8.3%20|%208.4%20|%208.5-777bb4)
+![PHP](https://img.shields.io/badge/PHP-8.4%20|%208.5-777bb4)
 ![Laravel](https://img.shields.io/badge/Laravel-13-ff2d20)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
@@ -53,7 +53,7 @@ dan riwayat perubahan kode sejak 2017.
 
 ## Kebutuhan
 
-- PHP 8.3, 8.4 atau 8.5 (disarankan 8.5) dengan ekstensi `pdo_sqlite`, `pdo_mysql` atau `pdo_pgsql`
+- PHP 8.4 atau 8.5 (disarankan 8.5) dengan ekstensi `pdo_sqlite`, `pdo_mysql` atau `pdo_pgsql`
 - Composer 2
 - Laravel 13
 
@@ -175,7 +175,7 @@ composer test
 ## English
 
 **Laravel Indonesian Territory** provides the official administrative region codes of Indonesia
-(*kode wilayah*) for Laravel 13 on PHP 8.3 or newer. It covers 38 provinces, 514 regencies and cities,
+(*kode wilayah*) for Laravel 13 on PHP 8.4 or newer. It covers 38 provinces, 514 regencies and cities,
 7,285 districts and 83,762 villages, plus postal codes, following the Ministry of Home Affairs decree
 Kepmendagri 300.2.2-2138/2025. The repository ships plain CSV files, a migration, a fast seeder,
 Eloquent models and a read-only JSON REST API. Codes are strings in the official dotted format, for example
